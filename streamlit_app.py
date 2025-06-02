@@ -26,179 +26,149 @@ st.set_page_config(
 # Force light mode and disable dark mode
 st.markdown("""
 <style>
-html, body, [class*="css"]  {
-    color: #2c3e50;
-    background-color: #f5f7fa;
-}
-[data-testid="stHeader"] {
-    background-color: rgba(0,0,0,0);
-}
-[data-testid="stToolbar"] {
-    right: 2rem;
-}
-</style>
-""", unsafe_allow_html=True)
+/* Define light and dark themes explicitly */
+html {
+  --primary-light: #3498db;
+  --secondary-light: #2980b9;
+  --text-light: #2c3e50;
+  --bg-light: #ffffff;
+  --card-bg-light: #f8f9fa;
+  --border-light: #dfe6e9;
 
-# Professional corporate CSS - single design for both modes
-st.markdown("""
-<style>
-:root {
-    --primary: #2c3e50;
-    --secondary: #34495e;
-    --accent: #3498db;
-    --light-bg: #f8f9fa;
-    --text: #2c3e50;
-    --border: #dfe6e9;
+  --primary-dark: #2980b9;
+  --secondary-dark: #1c5d99;
+  --text-dark: #ecf0f1;
+  --bg-dark: #1e293b;
+  --card-bg-dark: #334155;
+  --border-dark: #475569;
 }
 
-/* Force light colors and disable dark mode transitions */
+/* Set default (light) mode */
 body {
-    color: var(--text) !important;
-    background-color: var(--light-bg) !important;
-    transition: none !important;
+  background-color: var(--bg-light);
+  color: var(--text-light);
 }
 
-/* Main app styling */
-.stApp {
-    background-color: var(--light-bg) !important;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+/* Dark mode override */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: var(--bg-dark);
+    color: var(--text-dark);
+  }
 }
 
-/* Header styling */
-.header {
-    font-size: 28px;
+/* Card Styling */
+.report-card {
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid var(--primary-light);
+    background-color: var(--card-bg-light);
+}
+
+@media (prefers-color-scheme: dark) {
+    .report-card {
+        background-color: var(--card-bg-dark);
+        border-left: 4px solid var(--primary-dark);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+    }
+}
+
+/* Title Styling */
+.report-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    border-bottom: 2px solid var(--primary-light);
+    padding-bottom: 0.5rem;
+    color: var(--text-light);
+}
+
+@media (prefers-color-scheme: dark) {
+    .report-title {
+        color: var(--text-dark);
+        border-bottom: 2px solid var(--primary-dark);
+    }
+}
+
+/* Subtitle */
+.report-subtitle {
+    font-size: 1.25rem;
     font-weight: 600;
-    color: var(--primary) !important;
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border) !important;
+    margin: 1rem 0 0.5rem 0;
+    color: var(--text-light);
 }
 
-/* Info box styling */
-.info-box {
-    background-color: white !important;
-    border-left: 4px solid var(--accent) !important;
-    padding: 15px;
-    margin-bottom: 20px;
-    border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    color: var(--text) !important;
+@media (prefers-color-scheme: dark) {
+    .report-subtitle {
+        color: var(--text-dark);
+    }
 }
 
-/* Tabs styling */
-.stTabs [data-baseweb="tab-list"] {
-    gap: 5px;
-    margin-bottom: 20px;
+/* Time Indicator */
+.time-indicator {
+    display: inline-block;
+    background-color: var(--primary-light);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
 }
 
-.stTabs [data-baseweb="tab"] {
-    background: white !important;
-    border: 1px solid var(--border) !important;
-    border-bottom: none !important;
-    border-radius: 4px 4px 0 0 !important;
-    padding: 8px 20px !important;
-    font-weight: 500 !important;
-    color: var(--secondary) !important;
+@media (prefers-color-scheme: dark) {
+    .time-indicator {
+        background-color: var(--primary-dark);
+    }
 }
 
-.stTabs [data-baseweb="tab"]:hover {
-    color: var(--accent) !important;
+/* File Uploader */
+.stFileUploader > div > div {
+    border: 2px dashed var(--border-light);
+    border-radius: 12px;
+    padding: 2rem;
+    background-color: var(--card-bg-light);
+    transition: all 0.3s ease;
 }
 
-.stTabs [aria-selected="true"] {
-    color: var(--accent) !important;
-    font-weight: 600 !important;
-    border-bottom: 2px solid var(--accent) !important;
+.stFileUploader > div > div:hover {
+    border-color: var(--primary-light);
+    background-color: rgba(52, 152, 219, 0.05);
 }
 
-/* File uploader styling */
-.stFileUploader>div>div {
-    border: 1px dashed var(--border) !important;
-    background: white !important;
-    border-radius: 4px !important;
-    padding: 30px 0 !important;
+@media (prefers-color-scheme: dark) {
+    .stFileUploader > div > div {
+        border: 2px dashed var(--border-dark);
+        background-color: var(--card-bg-dark);
+    }
+    .stFileUploader > div > div:hover {
+        border-color: var(--primary-dark);
+        background-color: rgba(41, 128, 185, 0.1);
+    }
 }
 
-.stFileUploader>div>div:hover {
-    border-color: var(--accent) !important;
+/* Default File Message */
+.default-file {
+    font-size: 0.9rem;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border-left: 3px solid var(--primary-light);
+    background-color: rgba(52, 152, 219, 0.1);
+    color: var(--text-light);
 }
 
-/* Button styling */
-.stButton>button {
-    background-color: var(--accent) !important;
-    color: white !important;
-    border-radius: 4px !important;
-    border: none !important;
-    padding: 10px 24px !important;
-    font-weight: 500 !important;
-}
-
-.stButton>button:hover {
-    background-color: #2980b9 !important;
-    color: white !important;
-    box-shadow: none !important;
-}
-
-/* Dataframe styling */
-div[data-testid="stDataFrameContainer"] {
-    border: 1px solid var(--border) !important;
-    border-radius: 4px !important;
-    background-color: white !important;
-}
-
-/* Success message */
-.stSuccess {
-    background-color: rgba(52, 152, 219, 0.1) !important;
-    border-left: 4px solid var(--accent) !important;
-    color: var(--text) !important;
-}
-
-/* Date input styling */
-.stDateInput>div>div>input {
-    border: 1px solid var(--border) !important;
-    border-radius: 4px !important;
-    background-color: white !important;
-    color: var(--text) !important;
-}
-
-/* Select box styling */
-.stSelectbox>div>div>div {
-    border: 1px solid var(--border) !important;
-    border-radius: 4px !important;
-    background-color: white !important;
-    color: var(--text) !important;
-}
-
-/* Text input styling */
-.stTextInput>div>div>input {
-    color: var(--text) !important;
-    background-color: white !important;
-}
-
-/* Number input styling */
-.stNumberInput>div>div>input {
-    color: var(--text) !important;
-    background-color: white !important;
-}
-
-/* Text area styling */
-.stTextArea>div>div>textarea {
-    color: var(--text) !important;
-    background-color: white !important;
-}
-
-/* Sidebar styling */
-[data-testid="stSidebar"] {
-    background-color: white !important;
-    border-right: 1px solid var(--border) !important;
-}
-
-/* Disable dark mode toggle */
-[data-testid="stDecoration"] {
-    display: none !important;
+@media (prefers-color-scheme: dark) {
+    .default-file {
+        background-color: rgba(41, 128, 185, 0.2);
+        border-left: 3px solid var(--primary-dark);
+        color: var(--text-dark);
+    }
 }
 </style>
 """, unsafe_allow_html=True)
+
 
 # Neon glowing icons as SVG for tabs (can also use emojis or images)
 tab_icons = {
