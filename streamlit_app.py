@@ -23,7 +23,23 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Professional corporate CSS
+# Force light mode and disable dark mode
+st.markdown("""
+<style>
+html, body, [class*="css"]  {
+    color: #2c3e50;
+    background-color: #f5f7fa;
+}
+[data-testid="stHeader"] {
+    background-color: rgba(0,0,0,0);
+}
+[data-testid="stToolbar"] {
+    right: 2rem;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# Professional corporate CSS - single design for both modes
 st.markdown("""
 <style>
 :root {
@@ -35,9 +51,16 @@ st.markdown("""
     --border: #dfe6e9;
 }
 
+/* Force light colors and disable dark mode transitions */
+body {
+    color: var(--text) !important;
+    background-color: var(--light-bg) !important;
+    transition: none !important;
+}
+
 /* Main app styling */
 .stApp {
-    background-color: #f5f7fa;
+    background-color: var(--light-bg) !important;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -45,20 +68,21 @@ st.markdown("""
 .header {
     font-size: 28px;
     font-weight: 600;
-    color: var(--primary);
+    color: var(--primary) !important;
     margin-bottom: 15px;
     padding-bottom: 10px;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--border) !important;
 }
 
 /* Info box styling */
 .info-box {
-    background-color: white;
-    border-left: 4px solid var(--accent);
+    background-color: white !important;
+    border-left: 4px solid var(--accent) !important;
     padding: 15px;
     margin-bottom: 20px;
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    color: var(--text) !important;
 }
 
 /* Tabs styling */
@@ -119,24 +143,59 @@ st.markdown("""
 div[data-testid="stDataFrameContainer"] {
     border: 1px solid var(--border) !important;
     border-radius: 4px !important;
+    background-color: white !important;
 }
 
 /* Success message */
 .stSuccess {
     background-color: rgba(52, 152, 219, 0.1) !important;
     border-left: 4px solid var(--accent) !important;
+    color: var(--text) !important;
 }
 
 /* Date input styling */
 .stDateInput>div>div>input {
     border: 1px solid var(--border) !important;
     border-radius: 4px !important;
+    background-color: white !important;
+    color: var(--text) !important;
 }
 
 /* Select box styling */
 .stSelectbox>div>div>div {
     border: 1px solid var(--border) !important;
     border-radius: 4px !important;
+    background-color: white !important;
+    color: var(--text) !important;
+}
+
+/* Text input styling */
+.stTextInput>div>div>input {
+    color: var(--text) !important;
+    background-color: white !important;
+}
+
+/* Number input styling */
+.stNumberInput>div>div>input {
+    color: var(--text) !important;
+    background-color: white !important;
+}
+
+/* Text area styling */
+.stTextArea>div>div>textarea {
+    color: var(--text) !important;
+    background-color: white !important;
+}
+
+/* Sidebar styling */
+[data-testid="stSidebar"] {
+    background-color: white !important;
+    border-right: 1px solid var(--border) !important;
+}
+
+/* Disable dark mode toggle */
+[data-testid="stDecoration"] {
+    display: none !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -149,7 +208,7 @@ tab_icons = {
 }
 
 # Streamlit Tabs with icons + neon styles
-tab1,tab2,tab3 = st.tabs(list(tab_icons.keys()))
+tab1, tab2, tab3 = st.tabs(list(tab_icons.keys()))
 
 
 # --------------------------- REPORT 1 TAB ---------------------------
