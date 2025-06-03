@@ -15,6 +15,10 @@ from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 from openpyxl.utils.dataframe import dataframe_to_rows
 import io
 import streamlit.components.v1 as components
+from openpyxl.utils import get_column_letter
+import time
+import streamlit_authenticator as stauth
+
 
 st.set_page_config(
     page_title="OSG DASHBOARD",
@@ -182,9 +186,9 @@ tab1, tab2, tab3 = st.tabs(list(tab_icons.keys()))
 
 
 # --------------------------- REPORT 1 TAB ---------------------------
+
 with tab1:
     st.markdown('<h1 class="header">OSG All Store Report</h1>', unsafe_allow_html=True)
-
     with st.container():
         st.markdown("""
         <div class="info-box">
@@ -208,11 +212,12 @@ with tab1:
 
     # Load default files
     try:
-        store_list_file = "Myg All Store.xlsx"
-        rbm_bdm_file = "RBM,BDM,BRANCH.xlsx"
+        store_list_file = "/workspaces/osg2-dashboard/files/Myg All Store.xlsx"
+        rbm_bdm_file = "/workspaces/osg2-dashboard/files/RBM,BDM,BRANCH.xlsx"
         future_store_df = pd.read_excel(store_list_file)
         rbm_bdm_df = pd.read_excel(rbm_bdm_file)
         st.success("✅ Loaded default Future Store List & Store,RBM,BDM List.")
+        st.info("ℹ️ Please upload the Daily Sales Report to generate the store summary in bottom")
     except Exception as e:
         st.error(f"Error loading default store or RBM/BDM file: {e}")
         st.stop()
@@ -224,7 +229,6 @@ with tab1:
                 book1_df.rename(columns={'Branch': 'Store'}, inplace=True)
                 rbm_bdm_df.rename(columns={'Branch': 'Store'}, inplace=True)
 
-                # Parse and filter
                 book1_df['DATE'] = pd.to_datetime(book1_df['DATE'], dayfirst=True, errors='coerce')
                 book1_df = book1_df.dropna(subset=['DATE'])
                 today = pd.to_datetime(report_date)
@@ -242,7 +246,6 @@ with tab1:
                 report_df = report_df.merge(rbm_bdm_df[['Store', 'RBM', 'BDM']], on='Store', how='left')
                 report_df = report_df.sort_values('MTD Amount', ascending=False)
 
-                # Excel Report
                 header_fill = PatternFill(start_color="4F81BD", end_color="4F81BD", fill_type="solid")
                 header_font = Font(bold=True, color="FFFFFF")
                 data_fill = PatternFill(start_color="DCE6F1", end_color="DCE6F1", fill_type="solid")
@@ -293,7 +296,7 @@ with tab1:
                 wb.save(excel_buffer)
                 excel_buffer.seek(0)
 
-                # PDF Reports
+                # PDF Report
                 styles = getSampleStyleSheet()
                 base_table_style = TableStyle([
                     ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#003366')),
@@ -305,7 +308,7 @@ with tab1:
                     ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
                     ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.whitesmoke, colors.lightgrey]),
                 ])
-                col_widths = [100*mm/2.54, 70*mm/2.54, 60*mm/2.54, 60*mm/2.54, 60*mm/2.54, 60*mm/2.54]
+                col_widths = [150, 60, 60, 60, 60]
 
                 pdf_files = []
                 for rbm in report_df['RBM'].dropna().unique():
@@ -314,65 +317,112 @@ with tab1:
                         continue
                     pdf_buffer = BytesIO()
                     doc = SimpleDocTemplate(pdf_buffer, pagesize=letter, rightMargin=20, leftMargin=20, topMargin=20, bottomMargin=20)
-                    elements = [Paragraph(f"<b><font size=14>{rbm} Report</font></b>", styles['Title']),
-                                Paragraph(f"Generated on: {datetime.now().strftime('%d-%m-%Y')}", styles['Normal']),
-                                Spacer(1, 12)]
-                    table_data = [['Store', 'BDM', 'FTD Count', 'FTD Amount', 'MTD Count', 'MTD Amount']]
+                    elements = [
+                        Paragraph(f"<b><font size=14>{rbm} Report</font></b>", styles['Title']),
+                        Paragraph(f"Generated on: {datetime.now().strftime('%d-%m-%Y')}", styles['Normal']),
+                        Spacer(1, 12)
+                    ]
+
+                    table_data = [['Store', 'FTD Count', 'FTD Amount', 'MTD Count', 'MTD Amount']]
                     cell_styles = []
 
                     for row_idx, (_, row) in enumerate(rbm_data.iterrows(), start=1):
-                        table_row = [row['Store'], row['BDM'], int(row['FTD Count']), int(row['FTD Amount']), int(row['MTD Count']), int(row['MTD Amount'])]
+                        table_row = [
+                            row['Store'],
+                            int(row['FTD Count']),
+                            int(row['FTD Amount']),
+                            int(row['MTD Count']),
+                            int(row['MTD Amount'])
+                        ]
                         table_data.append(table_row)
                         if row['FTD Count'] == 0:
-                            cell_styles.append(('TEXTCOLOR', (2, row_idx), (2, row_idx), colors.red))
+                            cell_styles.append(('TEXTCOLOR', (1, row_idx), (1, row_idx), colors.red))
                         if row['MTD Count'] == 0:
-                            cell_styles.append(('TEXTCOLOR', (4, row_idx), (4, row_idx), colors.red))
+                            cell_styles.append(('TEXTCOLOR', (3, row_idx), (3, row_idx), colors.red))
 
-                    total_row = ['TOTAL', '', int(rbm_data['FTD Count'].sum()), int(rbm_data['FTD Amount'].sum()),
-                                 int(rbm_data['MTD Count'].sum()), int(rbm_data['MTD Amount'].sum())]
+                    total_row = [
+                        'TOTAL',
+                        int(rbm_data['FTD Count'].sum()),
+                        int(rbm_data['FTD Amount'].sum()),
+                        int(rbm_data['MTD Count'].sum()),
+                        int(rbm_data['MTD Amount'].sum())
+                    ]
                     table_data.append(total_row)
                     total_row_idx = len(table_data) - 1
                     cell_styles.extend([
                         ('BACKGROUND', (0, total_row_idx), (-1, total_row_idx), colors.HexColor('#FFD966')),
-                        ('FONTNAME', (0, total_row_idx), (-1, total_row_idx), 'Helvetica-Bold')
+                        ('FONTNAME', (0, total_row_idx), (-1, total_row_idx), 'Helvetica-Bold'),
                     ])
-                    table = Table(table_data, colWidths=col_widths)
-                    table.setStyle(TableStyle(base_table_style.getCommands() + cell_styles))
-                    elements.append(table)
+
+                    main_table = Table(table_data, colWidths=col_widths)
+                    main_table.setStyle(base_table_style)
+                    for style in cell_styles:
+                        main_table.setStyle(TableStyle([style]))
+
+                    elements.append(main_table)
+
+                    # BDM-wise breakdown
+                    elements.append(Spacer(1, 20))
+                    for bdm in rbm_data['BDM'].dropna().unique():
+                        bdm_data = rbm_data[rbm_data['BDM'] == bdm]
+                        elements.append(Spacer(1, 12))
+                        elements.append(Paragraph(f"<b>BDM: {bdm}</b>", styles['Heading4']))
+                        
+                        bdm_table_data = [['Store', 'FTD Count', 'FTD Amount', 'MTD Count', 'MTD Amount']]
+                        
+                        # Add rows
+                        for idx, row in bdm_data.iterrows():
+                            bdm_table_data.append([
+                                row['Store'],
+                                int(row['FTD Count']),
+                                int(row['FTD Amount']),
+                                int(row['MTD Count']),
+                                int(row['MTD Amount'])
+                            ])
+                        
+                        # Calculate total for all stores under this BDM
+                        total_ftd_count = int(bdm_data['FTD Count'].sum())
+                        total_ftd_amount = int(bdm_data['FTD Amount'].sum())
+                        total_mtd_count = int(bdm_data['MTD Count'].sum())
+                        total_mtd_amount = int(bdm_data['MTD Amount'].sum())
+                        
+                        total_row = ['TOTAL', total_ftd_count, total_ftd_amount, total_mtd_count, total_mtd_amount]
+                        bdm_table_data.append(total_row)
+                        total_row_idx = len(bdm_table_data) - 1
+                        
+                        bdm_table = Table(bdm_table_data, colWidths=col_widths)
+                        
+                        # Style the table
+                        bdm_table.setStyle(base_table_style)
+                        
+                        # Apply red text color for rows where FTD Count or MTD Count is zero
+                        for i, row in enumerate(bdm_table_data[1:-1], start=1):  # skip header and total row
+                            if row[1] == 0:
+                                bdm_table.setStyle(TableStyle([('TEXTCOLOR', (1, i), (1, i), colors.red)]))
+                            if row[3] == 0:
+                                bdm_table.setStyle(TableStyle([('TEXTCOLOR', (3, i), (3, i), colors.red)]))
+                        
+                        # Style the total row
+                        bdm_table.setStyle(TableStyle([
+                            ('BACKGROUND', (0, total_row_idx), (-1, total_row_idx), colors.HexColor('#FFD966')),
+                            ('FONTNAME', (0, total_row_idx), (-1, total_row_idx), 'Helvetica-Bold'),
+                            ('ALIGN', (0, total_row_idx), (-1, total_row_idx), 'CENTER'),
+                        ]))
+                        
+                        elements.append(bdm_table)
+
+
                     doc.build(elements)
                     pdf_buffer.seek(0)
-                    pdf_files.append((f"{rbm}_Report.pdf", pdf_buffer.read()))
+                    pdf_files.append((rbm, pdf_buffer))
+
+                st.download_button("Download Excel Report", data=excel_buffer, file_name=f"OSG_All_Store_Report_{today.strftime('%Y%m%d')}.xlsx")
+                for rbm, pdf_buf in pdf_files:
+                    st.download_button(label=f"Download {rbm} PDF Report", data=pdf_buf, file_name=f"{rbm}_Report_{today.strftime('%Y%m%d')}.pdf")
 
             except Exception as e:
-                st.error(f"Error during processing: {e}")
-                st.stop()
-
-        # --- Download Buttons ---
-        with st.container():
-            st.markdown('<div class="download-section">', unsafe_allow_html=True)
-            st.markdown('<h3>Download Reports</h3>', unsafe_allow_html=True)
-            col1, col2 = st.columns(2)
-            with col1:
-                st.download_button(
-                    label="📥 Download Excel Report (All Data)",
-                    data=excel_buffer,
-                    file_name=f"Sales_Report_{report_date.strftime('%Y%m%d')}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
-            with col2:
-                st.markdown('<p style="margin-top: 10px;">Individual PDF Reports by RBM:</p>', unsafe_allow_html=True)
-                for filename, pdf_data in pdf_files:
-                    st.download_button(
-                        label=f"📄 {filename.replace('_Report.pdf','')}",
-                        data=pdf_data,
-                        file_name=filename,
-                        mime="application/pdf",
-                        key=f"pdf_{filename}"
-                    )
-            st.markdown('</div>', unsafe_allow_html=True)
-
-    else:
-        st.info("ℹ️ Please upload all required files to generate the report.")
+                st.error(f"❌ Error: {e}")
+            
 
 
 # --------------------------- REPORT 2 TAB ---------------------------
@@ -400,7 +450,7 @@ with tab2:
     book2_file = st.file_uploader("Upload Daily Sales Report", type=["xlsx"], key="r2_book1")
 
     # Load Future Store List
-    future_df = pd.read_excel("Future Store List.xlsx")
+    future_df = pd.read_excel("/workspaces/osg2-dashboard/files/Future Store List.xlsx")
     st.success("✅ Loaded default Future Store List.")
 
     if book2_file:
@@ -499,9 +549,6 @@ with tab2:
             )
     else:
         st.info("ℹ️ Please upload the Daily Sales Report to generate the store summary.")
-
-
-
 # --------------------------- REPORT 3 TAB ---------------------------
 with tab3:
     st.markdown('<h1 class="header">OSG & Product Data Mapping</h1>', unsafe_allow_html=True)
